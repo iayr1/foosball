@@ -17,7 +17,8 @@ class MyApp extends StatelessWidget {
       title: 'Winner Foosball',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.amber),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF31D0AA)),
+        scaffoldBackgroundColor: const Color(0xFF0B1118),
         useMaterial3: true,
       ),
       initialRoute: '/',
