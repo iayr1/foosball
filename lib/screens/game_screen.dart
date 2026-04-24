@@ -62,28 +62,36 @@ class ScoreBoard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(gameProvider);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'P1: ${state.scoreP1}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xAA0C1820),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0x5544DAB9)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _ScoreChip(
+            label: 'Player 1',
+            score: state.scoreP1,
+            chipColor: const Color(0xFF2BD7B0),
           ),
-        ),
-        Text(
-          'P2: ${state.scoreP2}',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+          Text(
+            'Target: ${GameNotifier.winningScore}',
+            style: const TextStyle(
+              color: Color(0xFFCEE4DF),
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-      ],
+          _ScoreChip(
+            label: 'Player 2',
+            score: state.scoreP2,
+            chipColor: const Color(0xFFFFB75E),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -95,15 +103,58 @@ class TurnIndicator extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(gameProvider);
     return Center(
-      child: Text(
-        state.isPlayer1Turn ? "Player 1's Turn" : "Player 2's Turn",
-        style: TextStyle(
-          color: state.isPlayer1Turn ? Colors.cyanAccent : Colors.orangeAccent,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          shadows: const [Shadow(color: Colors.black, blurRadius: 4)],
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xAA0C1820),
+          borderRadius: BorderRadius.circular(40),
+          border: Border.all(
+            color: state.isPlayer1Turn
+                ? const Color(0xCC2BD7B0)
+                : const Color(0xCCFFB75E),
+          ),
+        ),
+        child: Text(
+          state.isPlayer1Turn ? "Player 1's Turn" : "Player 2's Turn",
+          style: TextStyle(
+            color: state.isPlayer1Turn
+                ? const Color(0xFF79F7DF)
+                : const Color(0xFFFFD2A0),
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _ScoreChip extends StatelessWidget {
+  final String label;
+  final int score;
+  final Color chipColor;
+
+  const _ScoreChip({
+    required this.label,
+    required this.score,
+    required this.chipColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        const SizedBox(height: 4),
+        Text(
+          '$score',
+          style: TextStyle(
+            color: chipColor,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
     );
   }
 }
