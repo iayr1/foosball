@@ -1,11 +1,16 @@
 import 'dart:async';
 
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../controllers/game_controller.dart';
+import '../game/sling_puck_game.dart';
 import '../models/game_mode.dart';
+import '../models/player.dart';
 import 'control_overlay_widget.dart';
 import 'game_board_widget.dart';
 import 'scoreboard_widget.dart';
+import 'win_dialog.dart';
 
 class SlingPuckGameView extends StatefulWidget {
   const SlingPuckGameView({super.key, required this.mode});
@@ -17,17 +22,47 @@ class SlingPuckGameView extends StatefulWidget {
 }
 
 class _SlingPuckGameViewState extends State<SlingPuckGameView> {
+  late final Player _topPlayer;
+  late final Player _bottomPlayer;
+  late final GameController _controller;
+  late final SlingPuckGame _game;
+
   int _playerScore = 0;
-  int _aiScore = 0;
+  int _opponentScore = 0;
+  int _playerPucksLeft = GameController.totalPucksPerPlayer;
+  int _opponentPucksLeft = GameController.totalPucksPerPlayer;
   bool _soundOn = true;
   bool _showHint = true;
   bool _isAiming = true;
+  bool _didShowWinDialog = false;
 
   Timer? _hintTimer;
 
   @override
   void initState() {
     super.initState();
+
+    _topPlayer = Player(
+      id: 'top',
+      name: widget.mode == GameMode.vsAI ? 'AI' : 'Player 2',
+      puckColor: const Color(0xFF191A1C),
+      startsOnTop: true,
+    );
+    _bottomPlayer = const Player(
+      id: 'bottom',
+      name: 'You',
+      puckColor: Color(0xFFEFEFEF),
+      startsOnTop: false,
+    );
+
+    _controller = GameController(
+      mode: widget.mode,
+      topPlayer: _topPlayer,
+      bottomPlayer: _bottomPlayer,
+    )..addListener(_onGameStateChanged);
+
+    _game = SlingPuckGame(controller: _controller);
+
     _hintTimer = Timer(const Duration(seconds: 4), () {
       if (!mounted) return;
       setState(() => _showHint = false);
@@ -37,6 +72,8 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
   @override
   void dispose() {
     _hintTimer?.cancel();
+    _controller.removeListener(_onGameStateChanged);
+    _controller.dispose();
     super.dispose();
   }
 
@@ -63,7 +100,9 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
                   children: [
                     ScoreboardWidget(
                       playerScore: _playerScore,
-                      aiScore: _aiScore,
+                      aiScore: _opponentScore,
+                      playerPucks: _playerPucksLeft,
+                      aiPucks: _opponentPucksLeft,
                       isSoundOn: _soundOn,
                       onMenuTap: () => Navigator.of(context).maybePop(),
                       onSoundTap: () => setState(() => _soundOn = !_soundOn),
@@ -72,23 +111,19 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
                     SizedBox(
                       height: boardHeight,
                       width: double.infinity,
-                      child: const GameBoardWidget(),
+                      child: GameBoardWidget(
+                        gameLayer: GameWidget(game: _game),
+                      ),
                     ),
                     const Spacer(),
                     SizedBox(
                       height: media.height * 0.18,
                       child: ControlOverlayWidget(
                         isAiming: _isAiming,
-                        onUndo: () {
-                          // UI only placeholder action.
-                          setState(() => _isAiming = !_isAiming);
-                        },
+                        onUndo: _restartMatch,
                         onBoost: () {
-                          // UI only placeholder action.
-                          setState(() {
-                            _playerScore = (_playerScore + 1) % 8;
-                            _aiScore = (_aiScore + 1) % 8;
-                          });
+                          // Keep action button behavior only (no UI changes).
+                          _restartMatch();
                         },
                       ),
                     ),
@@ -142,5 +177,44 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
         ),
       ),
     );
+  }
+
+  void _restartMatch() {
+    _didShowWinDialog = false;
+    _game.restart();
+  }
+
+  void _onGameStateChanged() {
+    if (!mounted) return;
+
+    final state = _controller.state;
+    final playerSent = state.whiteOnOpponentSide;
+    final opponentSent = state.blackOnOpponentSide;
+
+    setState(() {
+      _playerScore = playerSent;
+      _opponentScore = opponentSent;
+      _playerPucksLeft = GameController.totalPucksPerPlayer - playerSent;
+      _opponentPucksLeft = GameController.totalPucksPerPlayer - opponentSent;
+      _isAiming = !_controller.isWaiting &&
+          !_controller.isAiTurn &&
+          !state.hasWinner;
+    });
+
+    if (state.hasWinner && !_didShowWinDialog) {
+      _didShowWinDialog = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showDialog<void>(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => WinDialog(
+            winnerName:
+                state.winnerId == _bottomPlayer.id ? _bottomPlayer.name : _topPlayer.name,
+            onRestart: _restartMatch,
+          ),
+        );
+      });
+    }
   }
 }
