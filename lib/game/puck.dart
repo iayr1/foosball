@@ -4,6 +4,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
 import '../controllers/game_controller.dart';
+import '../models/game_mode.dart';
 
 class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   static const double radius = 16;
@@ -15,6 +16,7 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   final double midLineY;
   final bool Function(Puck puck) canShoot;
   final bool Function(Vector2 position) isHumanArea;
+  final bool Function(Vector2 position) isAIArea;
 
   Vector2 velocity = Vector2.zero();
   Vector2 _dragVector = Vector2.zero();
@@ -35,6 +37,7 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     required this.midLineY,
     required this.canShoot,
     required this.isHumanArea,
+    required this.isAIArea,
     required Vector2 initialPosition,
   }) : super(
           position: initialPosition,
@@ -55,8 +58,13 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     super.onDragStart(event);
     if (!controller.canControlPlayer(ownerId)) return;
     if (isMoving) return;
-    if (!isHuman) return;
-    if (!isHumanArea(position)) return;
+    if (controller.mode == GameMode.vsAI) {
+      if (!isHuman) return;
+      if (!isHumanArea(position)) return;
+    } else {
+      if (controller.turn == GameTurn.human && !isHumanArea(position)) return;
+      if (controller.turn == GameTurn.player2 && !isAIArea(position)) return;
+    }
 
     _isDragging = true;
     _dragVector = Vector2.zero();
@@ -73,8 +81,16 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     final currentPointer = previousPointer + event.localDelta;
 
     // Clamp drag pointer to human territory so aim input never crosses midline.
-    if (isHuman && currentPointer.y < midLineY) {
+    if (controller.mode == GameMode.vsAI && isHuman && currentPointer.y < midLineY) {
       currentPointer.y = midLineY;
+    }
+    if (controller.mode == GameMode.twoPlayer) {
+      if (controller.turn == GameTurn.human && currentPointer.y < midLineY) {
+        currentPointer.y = midLineY;
+      }
+      if (controller.turn == GameTurn.player2 && currentPointer.y > midLineY) {
+        currentPointer.y = midLineY;
+      }
     }
 
     // Pull opposite to swipe direction to create slingshot behavior.

@@ -25,6 +25,7 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
   void initState() {
     super.initState();
     _controller = GameController(
+      mode: widget.mode,
       topPlayer: Player(
         id: 'top',
         name: widget.mode == GameMode.vsAI ? 'Computer' : 'Player 2',

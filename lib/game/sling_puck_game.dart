@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/ai_controller.dart';
 import '../controllers/game_controller.dart';
+import '../models/game_mode.dart';
 import 'board.dart';
 import 'goal.dart';
 import 'physics.dart';
@@ -143,7 +144,9 @@ class SlingPuckGame extends FlameGame {
     required Color color,
     required Vector2 position,
   }) {
-    final isHuman = ownerId == controller.bottomPlayer.id;
+    final isHuman = controller.mode == GameMode.twoPlayer
+        ? true
+        : ownerId == controller.bottomPlayer.id;
     final puck = Puck(
       ownerId: ownerId,
       puckColor: color,
@@ -152,6 +155,7 @@ class SlingPuckGame extends FlameGame {
       midLineY: midLineY,
       canShoot: canShoot,
       isHumanArea: isHumanArea,
+      isAIArea: isAIArea,
       initialPosition: position,
     );
     _pucks.add(puck);
@@ -168,8 +172,19 @@ class SlingPuckGame extends FlameGame {
 
   /// Safety guard to ensure shots are only triggered from legal territory.
   bool canShoot(Puck puck) {
-    if (puck.isHuman && !isHumanArea(puck.position)) return false;
-    if (!puck.isHuman && !isAIArea(puck.position)) return false;
+    if (controller.mode == GameMode.vsAI) {
+      if (puck.isHuman && !isHumanArea(puck.position)) return false;
+      if (!puck.isHuman && !isAIArea(puck.position)) return false;
+      return true;
+    }
+
+    // In two-player mode both users can shoot only from their own side.
+    if (puck.ownerId == controller.bottomPlayer.id && !isHumanArea(puck.position)) {
+      return false;
+    }
+    if (puck.ownerId == controller.topPlayer.id && !isAIArea(puck.position)) {
+      return false;
+    }
     return true;
   }
 
@@ -193,6 +208,7 @@ class SlingPuckGame extends FlameGame {
   bool _allPucksStopped() => _pucks.every((puck) => !puck.isMoving);
 
   void _scheduleAiShotIfNeeded() {
+    if (controller.mode != GameMode.vsAI) return;
     if (_aiTimer?.isActive ?? false) return;
 
     final delay = Duration(milliseconds: aiController.nextDelayMs());
@@ -200,6 +216,7 @@ class SlingPuckGame extends FlameGame {
   }
 
   void _performAiShot() {
+    if (controller.mode != GameMode.vsAI) return;
     if (!controller.isAiTurn || controller.state.hasWinner) return;
 
     final decision = aiController.chooseShot(
