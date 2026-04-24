@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../controllers/game_flow_controller.dart';
 import '../models/game_mode.dart';
+import '../widgets/custom_button.dart';
 import 'tutorial_screen.dart';
 
 class ModeSelectionScreen extends StatelessWidget {
@@ -12,135 +13,110 @@ class ModeSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071317),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Sling Puck',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.2,
-                    ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF11100F), Color(0xFF281A11)],
+          ),
+        ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topCenter,
+                    radius: 1.2,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.55)],
                   ),
-                  const SizedBox(height: 52),
-                  _AnimatedTapButton(
-                    label: 'Play with Friend',
-                    icon: Icons.group,
-                    onTap: () => _selectMode(context, GameMode.twoPlayer),
-                  ),
-                  const SizedBox(height: 16),
-                  _AnimatedTapButton(
-                    label: 'Play with AI',
-                    icon: Icons.smart_toy_outlined,
-                    onTap: () => _selectMode(context, GameMode.vsAI),
-                  ),
-                ],
+                ),
               ),
             ),
-          ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    const Text(
+                      'SLING PUCK',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 42,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                    const Spacer(),
+                    CustomButton(
+                      title: '2 PLAYER',
+                      subtitle: 'Play with Friend',
+                      icon: const Text('👥', style: TextStyle(fontSize: 24)),
+                      gradient: const LinearGradient(colors: [Color(0xFF4A9BFF), Color(0xFF295EC9)]),
+                      onTap: () => _goTutorial(context, GameMode.twoPlayer),
+                    ),
+                    const SizedBox(height: 14),
+                    CustomButton(
+                      title: 'VS AI',
+                      subtitle: 'Play against AI',
+                      icon: const Text('🤖', style: TextStyle(fontSize: 24)),
+                      gradient: const LinearGradient(colors: [Color(0xFF875DFF), Color(0xFF5A38CC)]),
+                      onTap: () => _goTutorial(context, GameMode.vsAI),
+                    ),
+                    const Spacer(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: const [
+                        _BottomCircleIcon(icon: Icons.school_rounded),
+                        _BottomCircleIcon(icon: Icons.emoji_events_rounded),
+                        _BottomCircleIcon(icon: Icons.store_rounded),
+                        _BottomCircleIcon(icon: Icons.settings_rounded),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  void _selectMode(BuildContext context, GameMode mode) {
+  void _goTutorial(BuildContext context, GameMode mode) {
     flowController.setMode(mode);
     Navigator.of(context).push(
-      _slideRoute(
-        TutorialScreen(flowController: flowController),
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 400),
+        pageBuilder: (_, __, ___) => TutorialScreen(flowController: flowController),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
       ),
     );
   }
 }
 
-class _AnimatedTapButton extends StatefulWidget {
-  const _AnimatedTapButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
+class _BottomCircleIcon extends StatelessWidget {
+  const _BottomCircleIcon({required this.icon});
 
-  final String label;
   final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  State<_AnimatedTapButton> createState() => _AnimatedTapButtonState();
-}
-
-class _AnimatedTapButtonState extends State<_AnimatedTapButton> {
-  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        duration: const Duration(milliseconds: 130),
-        scale: _pressed ? 0.97 : 1,
-        curve: Curves.easeOut,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF31D0AA), Color(0xFF1C8F78)],
-            ),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x4431D0AA),
-                blurRadius: 16,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(widget.icon, color: const Color(0xFF06241E)),
-              const SizedBox(width: 10),
-              Text(
-                widget.label,
-                style: const TextStyle(
-                  color: Color(0xFF06241E),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
+    return Container(
+      width: 56,
+      height: 56,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xAA121212),
+        border: Border.all(color: Colors.white.withOpacity(0.18)),
+        boxShadow: const [
+          BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 5)),
+        ],
       ),
+      child: Icon(icon, color: Colors.white),
     );
   }
-}
-
-Route<T> _slideRoute<T>(Widget child) {
-  return PageRouteBuilder<T>(
-    transitionDuration: const Duration(milliseconds: 450),
-    pageBuilder: (_, __, ___) => child,
-    transitionsBuilder: (_, animation, __, child) {
-      final tween = Tween<Offset>(
-        begin: const Offset(0.12, 0),
-        end: Offset.zero,
-      ).chain(CurveTween(curve: Curves.easeOutCubic));
-      return SlideTransition(position: animation.drive(tween), child: child);
-    },
-  );
 }
