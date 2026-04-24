@@ -143,14 +143,34 @@ class SlingPuckGame extends FlameGame {
     required Color color,
     required Vector2 position,
   }) {
+    final isHuman = ownerId == controller.bottomPlayer.id;
     final puck = Puck(
       ownerId: ownerId,
       puckColor: color,
       controller: controller,
+      isHuman: isHuman,
+      midLineY: midLineY,
+      canShoot: canShoot,
+      isHumanArea: isHumanArea,
       initialPosition: position,
     );
     _pucks.add(puck);
     world.add(puck);
+  }
+
+  double get midLineY => fixedGameSize.y / 2;
+
+  /// Bottom half of the board belongs to the human player.
+  bool isHumanArea(Vector2 position) => position.y >= midLineY;
+
+  /// Top half of the board belongs to the AI player.
+  bool isAIArea(Vector2 position) => position.y < midLineY;
+
+  /// Safety guard to ensure shots are only triggered from legal territory.
+  bool canShoot(Puck puck) {
+    if (puck.isHuman && !isHumanArea(puck.position)) return false;
+    if (!puck.isHuman && !isAIArea(puck.position)) return false;
+    return true;
   }
 
   void _publishProgress() {
@@ -186,9 +206,15 @@ class SlingPuckGame extends FlameGame {
       allPucks: _pucks,
       aiOwnerId: controller.topPlayer.id,
       boardSize: fixedGameSize,
+      isAIArea: isAIArea,
     );
 
     if (decision == null) {
+      controller.registerAiShot();
+      return;
+    }
+
+    if (!canShoot(decision.puck)) {
       controller.registerAiShot();
       return;
     }
