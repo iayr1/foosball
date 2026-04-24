@@ -69,10 +69,8 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   void onDragUpdate(DragUpdateEvent event) {
     if (!_isDragging) return;
 
-    final previousPointer =
-        _dragPointerBoardPosition ?? (position + event.localPosition - _puckCenterOffset);
-    final currentPointer =
-        position + event.localPosition - _puckCenterOffset;
+    final previousPointer = _dragPointerBoardPosition ?? position.clone();
+    final currentPointer = previousPointer + event.localDelta;
 
     // Clamp drag pointer to human territory so aim input never crosses midline.
     if (isHuman && currentPointer.y < midLineY) {
