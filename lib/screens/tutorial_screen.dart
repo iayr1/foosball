@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../controllers/game_flow_controller.dart';
 import '../models/game_mode.dart';
+import '../widgets/custom_button.dart';
 import 'game_screen.dart';
 
 class TutorialScreen extends StatefulWidget {
@@ -15,162 +14,109 @@ class TutorialScreen extends StatefulWidget {
   State<TutorialScreen> createState() => _TutorialScreenState();
 }
 
-class _TutorialScreenState extends State<TutorialScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _demoController;
-  Timer? _autoTimer;
-
-  GameMode get _mode => widget.flowController.selectedMode ?? GameMode.twoPlayer;
-
-  @override
-  void initState() {
-    super.initState();
-    _demoController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1700),
-    )..repeat(reverse: true);
-
-    _autoTimer = Timer(const Duration(seconds: 6), _startGame);
-  }
+class _TutorialScreenState extends State<TutorialScreen> {
+  final PageController _pageController = PageController();
+  int _index = 0;
 
   @override
   void dispose() {
-    _autoTimer?.cancel();
-    _demoController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
   void _startGame() {
-    if (!mounted) return;
+    final mode = widget.flowController.selectedMode ?? GameMode.vsAI;
     Navigator.of(context).pushReplacement(
-      _fadeRoute(GameScreen(mode: _mode)),
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => GameScreen(mode: mode),
+        transitionDuration: const Duration(milliseconds: 420),
+        transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF071317),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: TextButton(
-                  onPressed: _startGame,
-                  child: const Text(
-                    'Skip',
-                    style: TextStyle(color: Color(0xFF90E7D3), fontSize: 16),
-                  ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF111111), Color(0xFF1E130D)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              children: [
+                const Text(
+                  'HOW TO PLAY',
+                  style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900),
                 ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'How to play',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 18),
-              const Text(
-                'Drag and release to shoot',
-                style: TextStyle(color: Color(0xFF9BC8BC), fontSize: 17),
-              ),
-              const SizedBox(height: 24),
-              Expanded(
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: 1.2,
-                    child: Container(
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    3,
+                    (i) => Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF0D1A1E),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: const Color(0xFF1E6455)),
-                      ),
-                      child: AnimatedBuilder(
-                        animation: _demoController,
-                        builder: (context, child) {
-                          final t = Curves.easeInOut.transform(
-                            _demoController.value,
-                          );
-                          final puckX = 26 + (t * 190);
-                          final arrowOffset = -20 + (t * 30);
-                          return Stack(
-                            children: [
-                              const Positioned.fill(
-                                child: Center(
-                                  child: Divider(
-                                    color: Color(0xFF1A4038),
-                                    thickness: 2,
-                                    height: 2,
-                                    indent: 18,
-                                    endIndent: 18,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                left: puckX,
-                                bottom: 66,
-                                child: Container(
-                                  width: 26,
-                                  height: 26,
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Color(0xFF31D0AA),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                left: 40 + arrowOffset,
-                                bottom: 120,
-                                child: const Icon(
-                                  Icons.arrow_forward,
-                                  color: Color(0xFF9DFFEA),
-                                  size: 36,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
+                        shape: BoxShape.circle,
+                        color: i == _index ? const Color(0xFF42E38C) : Colors.white24,
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              _InfoRow(
-                icon: Icons.touch_app,
-                label: 'Drag → Aim → Release',
-              ),
-              const SizedBox(height: 8),
-              _InfoRow(
-                icon: Icons.sports_score,
-                label: 'Send all pucks to opponent side',
-              ),
-              const SizedBox(height: 26),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
+                const SizedBox(height: 16),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    onPageChanged: (value) => setState(() => _index = value),
+                    children: const [
+                      _TutorialCard(title: 'DRAG', symbol: '👆', text: 'Drag the puck backwards'),
+                      _TutorialCard(title: 'AIM', symbol: '➶', text: 'Aim towards the gap'),
+                      _TutorialCard(title: 'RELEASE', symbol: '💨', text: 'Release to shoot'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: const Color(0xAA131313),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• Shoot all pucks to opponent side', style: TextStyle(color: Colors.white70)),
+                      SizedBox(height: 4),
+                      Text('• Only shoot from your area', style: TextStyle(color: Colors.white70)),
+                      SizedBox(height: 4),
+                      Text('• First to clear wins', style: TextStyle(color: Colors.white70)),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                CustomButton(
+                  title: 'GOT IT',
+                  gradient: const LinearGradient(colors: [Color(0xFF38C975), Color(0xFF2C9D5D)]),
+                  subtitle: 'Start match',
+                  onTap: _startGame,
+                  icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                ),
+                TextButton(
                   onPressed: _startGame,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF31D0AA),
-                    foregroundColor: const Color(0xFF07231C),
-                    minimumSize: const Size.fromHeight(54),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  child: Text(
-                    _mode == GameMode.vsAI ? 'Start vs AI' : 'Start 2 Player Game',
-                  ),
+                  child: const Text('SKIP TUTORIAL', style: TextStyle(color: Colors.white70)),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -178,31 +124,37 @@ class _TutorialScreenState extends State<TutorialScreen>
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.icon, required this.label});
+class _TutorialCard extends StatelessWidget {
+  const _TutorialCard({required this.title, required this.symbol, required this.text});
 
-  final IconData icon;
-  final String label;
+  final String title;
+  final String symbol;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF8FD5C4)),
-        const SizedBox(width: 8),
-        Text(label, style: const TextStyle(color: Color(0xFFAFD5CC))),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0x771B1B1B),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white24),
+          boxShadow: const [
+            BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 8)),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(title, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 14),
+            Text(symbol, style: const TextStyle(fontSize: 64)),
+            const SizedBox(height: 14),
+            Text(text, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+          ],
+        ),
+      ),
     );
   }
-}
-
-Route<T> _fadeRoute<T>(Widget child) {
-  return PageRouteBuilder<T>(
-    transitionDuration: const Duration(milliseconds: 400),
-    pageBuilder: (_, __, ___) => child,
-    transitionsBuilder: (_, animation, __, child) {
-      return FadeTransition(opacity: animation, child: child);
-    },
-  );
 }
