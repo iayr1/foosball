@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:async' as async;
 
 import 'package:flame/components.dart';
 import 'package:flame/game.dart';
@@ -30,7 +30,7 @@ class SlingPuckGame extends FlameGame {
 
   final List<Puck> _pucks = <Puck>[];
   final List<Wall> _walls = <Wall>[];
-  Timer? _aiTimer;
+  async.Timer? _aiTimer;
 
   @override
   Color backgroundColor() => const Color(0xFF3E2713);
@@ -176,7 +176,7 @@ class SlingPuckGame extends FlameGame {
     if (_aiTimer?.isActive ?? false) return;
 
     final delay = Duration(milliseconds: aiController.nextDelayMs());
-    _aiTimer = Timer(delay, _performAiShot);
+    _aiTimer = async.Timer(delay, _performAiShot);
   }
 
   void _performAiShot() {
