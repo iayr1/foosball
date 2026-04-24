@@ -12,7 +12,7 @@ import 'puck.dart';
 import 'wall.dart';
 
 class SlingPuckGame extends FlameGame {
-  static const Vector2 fixedGameSize = Vector2(420, 760);
+  static final Vector2 fixedGameSize = Vector2(420, 760);
   static const double centerGapWidth = 90;
   static const double wallThickness = 16;
 
