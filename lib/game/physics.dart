@@ -8,9 +8,7 @@ import 'wall.dart';
 
 /// Physics helper that keeps gameplay deterministic and easy to tune.
 class PhysicsEngine {
-  static const double frictionPerSecond = 0.985;
   static const double restitution = 0.92;
-  static const double maxSpeed = 980;
 
   void update({
     required double dt,
@@ -31,7 +29,7 @@ class PhysicsEngine {
     for (final puck in pucks) {
       _clampVelocity(puck);
       puck.position += puck.velocity * dt;
-      puck.velocity *= math.pow(frictionPerSecond, dt * 60).toDouble();
+      puck.velocity *= math.pow(puck.frictionPerSecond, dt * 60).toDouble();
 
       if (puck.velocity.length < 8) {
         puck.velocity.setZero();
@@ -69,8 +67,14 @@ class PhysicsEngine {
   }
 
   void _resolveWallCollision(Puck puck, Wall wall) {
-    final nearestX = puck.position.x.clamp(wall.position.x, wall.position.x + wall.size.x);
-    final nearestY = puck.position.y.clamp(wall.position.y, wall.position.y + wall.size.y);
+    final nearestX = puck.position.x.clamp(
+      wall.position.x,
+      wall.position.x + wall.size.x,
+    );
+    final nearestY = puck.position.y.clamp(
+      wall.position.y,
+      wall.position.y + wall.size.y,
+    );
     final delta = Vector2(puck.position.x - nearestX, puck.position.y - nearestY);
     final distance = delta.length;
 
@@ -119,8 +123,8 @@ class PhysicsEngine {
   }
 
   void _clampVelocity(Puck puck) {
-    if (puck.velocity.length > maxSpeed) {
-      puck.velocity.scaleTo(maxSpeed);
+    if (puck.velocity.length > puck.maxVelocity) {
+      puck.velocity.scaleTo(puck.maxVelocity);
     }
   }
 }

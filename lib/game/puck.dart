@@ -16,6 +16,10 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   Vector2 _dragVector = Vector2.zero();
   bool _isDragging = false;
 
+  // Tunable per-puck physics values used by the PhysicsEngine.
+  final double frictionPerSecond = 0.985;
+  final double maxVelocity = 980;
+
   Puck({
     required this.ownerId,
     required this.puckColor,
@@ -62,16 +66,23 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     if (!_isDragging) return;
 
     const double releasePower = 8.5;
-    velocity += _dragVector * releasePower;
+    applyShotVelocity(_dragVector * releasePower);
     _isDragging = false;
     _dragVector = Vector2.zero();
-    controller.switchTurn();
+    controller.registerHumanShot();
   }
 
   @override
   void onDragCancel(DragCancelEvent event) {
     _isDragging = false;
     _dragVector = Vector2.zero();
+  }
+
+  void applyShotVelocity(Vector2 shotVelocity) {
+    velocity += shotVelocity;
+    if (velocity.length > maxVelocity) {
+      velocity.scaleTo(maxVelocity);
+    }
   }
 
   @override
