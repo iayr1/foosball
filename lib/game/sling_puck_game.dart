@@ -4,6 +4,7 @@ import 'package:flame/components.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../controllers/ai_controller.dart';
 import '../controllers/game_controller.dart';
 import 'board.dart';
 import 'goal.dart';
@@ -18,12 +19,18 @@ class SlingPuckGame extends FlameGame {
 
   final GameController controller;
   final PhysicsEngine physics;
+  final AiController aiController;
 
-  SlingPuckGame({required this.controller, PhysicsEngine? physics})
-      : physics = physics ?? PhysicsEngine();
+  SlingPuckGame({
+    required this.controller,
+    PhysicsEngine? physics,
+    AiController? aiController,
+  })  : physics = physics ?? PhysicsEngine(),
+        aiController = aiController ?? AiController();
 
   final List<Puck> _pucks = <Puck>[];
   final List<Wall> _walls = <Wall>[];
+  Timer? _aiTimer;
 
   @override
   Color backgroundColor() => const Color(0xFF3E2713);
@@ -47,6 +54,7 @@ class SlingPuckGame extends FlameGame {
     super.update(dt);
 
     if (controller.state.hasWinner) {
+      _aiTimer?.cancel();
       for (final puck in _pucks) {
         puck.velocity.setZero();
       }
@@ -61,15 +69,25 @@ class SlingPuckGame extends FlameGame {
     );
 
     _publishProgress();
+
+    if (controller.isWaiting && _allPucksStopped()) {
+      controller.onBoardSettled();
+    }
+
+    if (controller.isAiTurn && _allPucksStopped()) {
+      _scheduleAiShotIfNeeded();
+    }
   }
 
   @override
   void onRemove() {
+    _aiTimer?.cancel();
     controller.removeListener(_onControllerChanged);
     super.onRemove();
   }
 
   void restart() {
+    _aiTimer?.cancel();
     controller.reset();
     for (final puck in _pucks) {
       puck.removeFromParent();
@@ -152,7 +170,36 @@ class SlingPuckGame extends FlameGame {
     );
   }
 
+  bool _allPucksStopped() => _pucks.every((puck) => !puck.isMoving);
+
+  void _scheduleAiShotIfNeeded() {
+    if (_aiTimer?.isActive ?? false) return;
+
+    final delay = Duration(milliseconds: aiController.nextDelayMs());
+    _aiTimer = Timer(delay, _performAiShot);
+  }
+
+  void _performAiShot() {
+    if (!controller.isAiTurn || controller.state.hasWinner) return;
+
+    final decision = aiController.chooseShot(
+      allPucks: _pucks,
+      aiOwnerId: controller.topPlayer.id,
+      boardSize: fixedGameSize,
+    );
+
+    if (decision == null) {
+      controller.registerAiShot();
+      return;
+    }
+
+    decision.puck.applyShotVelocity(decision.velocity);
+    controller.registerAiShot();
+  }
+
   void _onControllerChanged() {
-    // Reserved for reacting to external state changes in the future.
+    if (!controller.isAiTurn) {
+      _aiTimer?.cancel();
+    }
   }
 }

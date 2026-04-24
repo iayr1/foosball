@@ -24,13 +24,13 @@ class _GameScreenState extends State<GameScreen> {
     _controller = GameController(
       topPlayer: const Player(
         id: 'black',
-        name: 'Black',
+        name: 'Computer',
         puckColor: Color(0xFF111111),
         startsOnTop: true,
       ),
       bottomPlayer: const Player(
         id: 'white',
-        name: 'White',
+        name: 'Human',
         puckColor: Color(0xFFF2F2F2),
         startsOnTop: false,
       ),

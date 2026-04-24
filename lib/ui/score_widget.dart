@@ -27,8 +27,11 @@ class ScoreWidget extends StatelessWidget {
                 controller.topPlayer.puckColor,
               ),
               Text(
-                'Turn: ${state.currentTurnId == controller.topPlayer.id ? controller.topPlayer.name : controller.bottomPlayer.name}',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                'Turn: ${controller.turnLabel}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               _badge(
                 '${controller.bottomPlayer.name}: ${state.whiteOnOpponentSide}/${GameController.totalPucksPerPlayer}',
