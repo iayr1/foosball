@@ -1,12 +1,11 @@
-import 'package:flame/game.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
-import '../controllers/game_controller.dart';
-import '../game/sling_puck_game.dart';
 import '../models/game_mode.dart';
-import '../models/player.dart';
-import 'score_widget.dart';
-import 'win_dialog.dart';
+import 'control_overlay_widget.dart';
+import 'game_board_widget.dart';
+import 'scoreboard_widget.dart';
 
 class SlingPuckGameView extends StatefulWidget {
   const SlingPuckGameView({super.key, required this.mode});
@@ -18,98 +17,130 @@ class SlingPuckGameView extends StatefulWidget {
 }
 
 class _SlingPuckGameViewState extends State<SlingPuckGameView> {
-  late final GameController _controller;
-  late final SlingPuckGame _game;
+  int _playerScore = 0;
+  int _aiScore = 0;
+  bool _soundOn = true;
+  bool _showHint = true;
+  bool _isAiming = true;
+
+  Timer? _hintTimer;
 
   @override
   void initState() {
     super.initState();
-    _controller = GameController(
-      mode: widget.mode,
-      topPlayer: Player(
-        id: 'top',
-        name: widget.mode == GameMode.vsAI ? 'Computer' : 'Player 2',
-        puckColor: const Color(0xFF111111),
-        startsOnTop: true,
-      ),
-      bottomPlayer: Player(
-        id: 'bottom',
-        name: widget.mode == GameMode.vsAI ? 'Human' : 'Player 1',
-        puckColor: const Color(0xFFF2F2F2),
-        startsOnTop: false,
-      ),
-    );
-    _game = SlingPuckGame(controller: _controller);
-    _controller.addListener(_observeWinner);
+    _hintTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() => _showHint = false);
+    });
   }
 
   @override
   void dispose() {
-    _controller.removeListener(_observeWinner);
-    _controller.dispose();
+    _hintTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final media = MediaQuery.sizeOf(context);
+    final boardHeight = media.height * 0.64;
+
     return Scaffold(
-      backgroundColor: const Color(0xFF071317),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            GameWidget(game: _game),
-            Positioned(
-              left: 12,
-              right: 12,
-              top: 12,
-              child: ScoreWidget(controller: _controller),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF120D0C), Color(0xFF050607)],
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+            child: Stack(
+              children: [
+                Column(
+                  children: [
+                    ScoreboardWidget(
+                      playerScore: _playerScore,
+                      aiScore: _aiScore,
+                      isSoundOn: _soundOn,
+                      onMenuTap: () => Navigator.of(context).maybePop(),
+                      onSoundTap: () => setState(() => _soundOn = !_soundOn),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      height: boardHeight,
+                      width: double.infinity,
+                      child: const GameBoardWidget(),
+                    ),
+                    const Spacer(),
+                    SizedBox(
+                      height: media.height * 0.18,
+                      child: ControlOverlayWidget(
+                        isAiming: _isAiming,
+                        onUndo: () {
+                          // UI only placeholder action.
+                          setState(() => _isAiming = !_isAiming);
+                        },
+                        onBoost: () {
+                          // UI only placeholder action.
+                          setState(() {
+                            _playerScore = (_playerScore + 1) % 8;
+                            _aiScore = (_aiScore + 1) % 8;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                Positioned(
+                  top: media.height * 0.49,
+                  left: 0,
+                  right: 0,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 600),
+                    opacity: _showHint ? 1 : 0,
+                    child: IgnorePointer(
+                      ignoring: true,
+                      child: Center(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xD91A1B1D),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: const Color(0x66FF9F43),
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x66FF9F43),
+                                blurRadius: 16,
+                                spreadRadius: 0.5,
+                              ),
+                            ],
+                          ),
+                          child: const Text(
+                            'Drag to aim • Release to shoot',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            Positioned(
-              left: 12,
-              top: 72,
-              child: FilledButton.tonalIcon(
-                onPressed: () => Navigator.of(context).maybePop(),
-                icon: const Icon(Icons.arrow_back),
-                label: const Text('Back'),
-              ),
-            ),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: FilledButton.icon(
-                onPressed: _restartGame,
-                icon: const Icon(Icons.restart_alt),
-                label: const Text('Restart'),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
-  }
-
-  void _observeWinner() {
-    final winnerId = _controller.state.winnerId;
-    if (winnerId == null) return;
-
-    final winnerName = winnerId == _controller.topPlayer.id
-        ? _controller.topPlayer.name
-        : _controller.bottomPlayer.name;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      showDialog<void>(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => WinDialog(
-          winnerName: winnerName,
-          onRestart: _restartGame,
-        ),
-      );
-    });
-  }
-
-  void _restartGame() {
-    _game.restart();
   }
 }
