@@ -3,9 +3,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class GameBoardWidget extends StatelessWidget {
-  const GameBoardWidget({super.key, this.highlightGap = true});
+  const GameBoardWidget({
+    super.key,
+    this.highlightGap = true,
+    this.gameLayer,
+  });
 
   final bool highlightGap;
+
+  /// Optional interactive game renderer layered on top of the board art.
+  final Widget? gameLayer;
 
   @override
   Widget build(BuildContext context) {
@@ -29,8 +36,11 @@ class GameBoardWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(24),
               child: Stack(
                 children: [
-                  ..._buildPucks(topSide: true),
-                  ..._buildPucks(topSide: false),
+                  if (gameLayer == null) ...[
+                    ..._buildPucks(topSide: true),
+                    ..._buildPucks(topSide: false),
+                  ] else
+                    Positioned.fill(child: gameLayer!),
                   const _HintArrows(),
                 ],
               ),

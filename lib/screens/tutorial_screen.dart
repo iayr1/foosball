@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../controllers/game_flow_controller.dart';
 import '../models/game_mode.dart';
 import '../widgets/custom_button.dart';
-import 'game_screen.dart';
+import '../ui/game_screen.dart';
 
 class TutorialScreen extends StatefulWidget {
   const TutorialScreen({super.key, required this.flowController});
@@ -28,7 +28,7 @@ class _TutorialScreenState extends State<TutorialScreen> {
     final mode = widget.flowController.selectedMode ?? GameMode.vsAI;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => GameScreen(mode: mode),
+        pageBuilder: (_, __, ___) => SlingPuckGameView(mode: mode),
         transitionDuration: const Duration(milliseconds: 420),
         transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
       ),
