@@ -11,9 +11,14 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   final String ownerId;
   final Color puckColor;
   final GameController controller;
+  final bool isHuman;
+  final double midLineY;
+  final bool Function(Puck puck) canShoot;
+  final bool Function(Vector2 position) isHumanArea;
 
   Vector2 velocity = Vector2.zero();
   Vector2 _dragVector = Vector2.zero();
+  Vector2? _dragPointerCanvasPosition;
   bool _isDragging = false;
 
   // Tunable per-puck physics values used by the PhysicsEngine.
@@ -24,6 +29,10 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     required this.ownerId,
     required this.puckColor,
     required this.controller,
+    required this.isHuman,
+    required this.midLineY,
+    required this.canShoot,
+    required this.isHumanArea,
     required Vector2 initialPosition,
   }) : super(
           position: initialPosition,
@@ -43,9 +52,12 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   void onDragStart(DragStartEvent event) {
     if (!controller.canControlPlayer(ownerId)) return;
     if (isMoving) return;
+    if (!isHuman) return;
+    if (!isHumanArea(position)) return;
 
     _isDragging = true;
     _dragVector = Vector2.zero();
+    _dragPointerCanvasPosition = event.canvasPosition.clone();
     event.continuePropagation = false;
   }
 
@@ -53,11 +65,21 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
   void onDragUpdate(DragUpdateEvent event) {
     if (!_isDragging) return;
 
+    final previousPointer = _dragPointerCanvasPosition ?? event.canvasPosition;
+    final currentPointer = event.canvasPosition.clone();
+
+    // Clamp drag pointer to human territory so aim input never crosses midline.
+    if (isHuman && currentPointer.y < midLineY) {
+      currentPointer.y = midLineY;
+    }
+
     // Pull opposite to swipe direction to create slingshot behavior.
-    _dragVector -= event.localDelta;
+    _dragVector -= (currentPointer - previousPointer);
     if (_dragVector.length > 140) {
       _dragVector.scaleTo(140);
     }
+
+    _dragPointerCanvasPosition = currentPointer;
     event.continuePropagation = false;
   }
 
@@ -66,16 +88,20 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     if (!_isDragging) return;
 
     const double releasePower = 8.5;
-    applyShotVelocity(_dragVector * releasePower);
+    if (canShoot(this)) {
+      applyShotVelocity(_dragVector * releasePower);
+      controller.registerHumanShot();
+    }
     _isDragging = false;
     _dragVector = Vector2.zero();
-    controller.registerHumanShot();
+    _dragPointerCanvasPosition = null;
   }
 
   @override
   void onDragCancel(DragCancelEvent event) {
     _isDragging = false;
     _dragVector = Vector2.zero();
+    _dragPointerCanvasPosition = null;
   }
 
   void applyShotVelocity(Vector2 shotVelocity) {

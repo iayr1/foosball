@@ -22,23 +22,25 @@ class AiController {
     required Iterable<Puck> allPucks,
     required String aiOwnerId,
     required Vector2 boardSize,
+    required bool Function(Vector2 position) isAIArea,
   }) {
     final aiPucks = allPucks
         .where((puck) => puck.ownerId == aiOwnerId)
         .where((puck) => !puck.isMoving)
         .toList();
 
-    if (aiPucks.isEmpty) return null;
+    final validPucks = aiPucks.where((puck) => isAIArea(puck.position)).toList();
+    if (validPucks.isEmpty) return null;
 
     final centerGap = Vector2(boardSize.x / 2, boardSize.y / 2);
 
-    aiPucks.sort((a, b) {
+    validPucks.sort((a, b) {
       final da = (a.position - centerGap).length2;
       final db = (b.position - centerGap).length2;
       return da.compareTo(db);
     });
 
-    final puck = aiPucks.first;
+    final puck = validPucks.first;
     final target = _targetWithHumanLikeError(centerGap);
     var direction = target - puck.position;
     if (direction.length2 < 1) {
