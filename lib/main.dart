@@ -1,32 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'screens/game_over_screen.dart';
-import 'screens/game_screen.dart';
-import 'screens/menu_screen.dart';
+
+import 'ui/game_screen.dart';
 
 void main() {
-  runApp(const ProviderScope(child: MyApp()));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const SlingPuckApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SlingPuckApp extends StatelessWidget {
+  const SlingPuckApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Winner Foosball',
+      title: 'Sling Puck',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF31D0AA)),
-        scaffoldBackgroundColor: const Color(0xFF0B1118),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF8B5A2B)),
         useMaterial3: true,
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const MenuScreen(),
-        '/game': (context) => const GameScreen(),
-        '/gameover': (context) => const GameOverScreen(),
-      },
+      home: const GameScreen(),
     );
   }
 }
