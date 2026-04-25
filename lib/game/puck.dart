@@ -3,6 +3,7 @@ import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 
+import '../audio/sfx_service.dart';
 import '../controllers/game_controller.dart';
 import '../models/game_mode.dart';
 
@@ -70,6 +71,7 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     _dragVector = Vector2.zero();
     _dragPointerBoardPosition =
         position + event.localPosition - _puckCenterOffset;
+    SfxService.instance.playSlingStretch();
     event.continuePropagation = false;
   }
 
@@ -131,6 +133,7 @@ class Puck extends PositionComponent with DragCallbacks, CollisionCallbacks {
     if (velocity.length > maxVelocity) {
       velocity.scaleTo(maxVelocity);
     }
+    SfxService.instance.playStriker();
   }
 
   @override

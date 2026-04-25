@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../audio/sfx_service.dart';
 import '../controllers/game_controller.dart';
 import '../game/sling_puck_game.dart';
 import '../models/game_mode.dart';
@@ -42,6 +43,8 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
   @override
   void initState() {
     super.initState();
+    SfxService.instance.initialize();
+    SfxService.instance.setEnabled(_soundOn);
 
     _topPlayer = Player(
       id: 'top',
@@ -107,7 +110,10 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
       opponentName: _topPlayer.name,
       isSoundOn: _soundOn,
       onMenuTap: () => Navigator.of(context).maybePop(),
-      onSoundTap: () => setState(() => _soundOn = !_soundOn),
+      onSoundTap: () {
+        setState(() => _soundOn = !_soundOn);
+        SfxService.instance.setEnabled(_soundOn);
+      },
     ),
 
     const SizedBox(height: 12),

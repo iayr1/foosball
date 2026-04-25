@@ -38,6 +38,7 @@ dependencies:
   flutter_riverpod: ^3.2.1
   state_notifier: ^1.0.0
   shared_preferences: ^2.5.3
+  audioplayers: ^6.5.0
 
 dev_dependencies:
   flutter_test:
@@ -61,9 +62,9 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/sound_effects/
+    - assets/sound_effects/slingstretchsound.mp3
+    - assets/sound_effects/strikersound.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
