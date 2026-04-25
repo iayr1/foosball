@@ -28,9 +28,10 @@ class _TutorialScreenState extends State<TutorialScreen> {
     final mode = widget.flowController.selectedMode ?? GameMode.vsAI;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => SlingPuckGameView(mode: mode),
+        pageBuilder: (context, animation, secondaryAnimation) => SlingPuckGameView(mode: mode),
         transitionDuration: const Duration(milliseconds: 420),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(opacity: animation, child: child),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
       ),
     );
   }
