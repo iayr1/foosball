@@ -131,10 +131,12 @@ class _TutorialScreenState extends State<TutorialScreen> {
 class _TutorialCard extends StatefulWidget {
   const _TutorialCard({
     required this.title,
+    required this.symbol,
     required this.text,
   });
 
   final String title;
+  final String symbol;
   final String text;
 
   @override
@@ -217,7 +219,7 @@ class _TutorialCardState extends State<_TutorialCard>
           gradient: const LinearGradient(
             colors: [Color(0xFF1A1B1D), Color(0xFF0E0F11)],
           ),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           boxShadow: const [
             BoxShadow(color: Colors.black54, blurRadius: 20),
           ],
@@ -235,6 +237,12 @@ class _TutorialCardState extends State<_TutorialCard>
               ),
             ),
 
+            const SizedBox(height: 8),
+            Text(
+              widget.symbol,
+              style: const TextStyle(fontSize: 28),
+            ),
+
             const SizedBox(height: 20),
 
             /// 🎯 TRAJECTORY
@@ -249,7 +257,7 @@ class _TutorialCardState extends State<_TutorialCard>
                   /// ✋ HAND
                   AnimatedBuilder(
                     animation: _puckController,
-                    builder: (_, __) {
+                    builder: (_, _) {
                       return Transform.translate(
                         offset: Offset(
                           _puckMove.value.dx * 120,
@@ -267,7 +275,7 @@ class _TutorialCardState extends State<_TutorialCard>
                   /// ⚪ PUCK
                   AnimatedBuilder(
                     animation: _puckController,
-                    builder: (_, __) {
+                    builder: (_, _) {
                       return Transform.translate(
                         offset: Offset(
                           _puckMove.value.dx * 120,
@@ -288,7 +296,7 @@ class _TutorialCardState extends State<_TutorialCard>
                   /// 💥 IMPACT
                   AnimatedBuilder(
                     animation: _impactController,
-                    builder: (_, __) {
+                    builder: (_, _) {
                       return Opacity(
                         opacity: _impactOpacity.value,
                         child: Transform.scale(
