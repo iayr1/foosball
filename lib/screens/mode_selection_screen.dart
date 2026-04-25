@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../controllers/game_flow_controller.dart';
 import '../models/game_mode.dart';
 import '../widgets/custom_button.dart';
+import 'mode_bottom_screens.dart';
 import 'tutorial_screen.dart';
 
 class ModeSelectionScreen extends StatelessWidget {
@@ -68,11 +69,27 @@ class ModeSelectionScreen extends StatelessWidget {
                     const Spacer(),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: const [
-                        _BottomCircleIcon(icon: Icons.school_rounded),
-                        _BottomCircleIcon(icon: Icons.emoji_events_rounded),
-                        _BottomCircleIcon(icon: Icons.store_rounded),
-                        _BottomCircleIcon(icon: Icons.settings_rounded),
+                      children: [
+                        _BottomCircleIcon(
+                          icon: Icons.school_rounded,
+                          label: 'Academy',
+                          onTap: () => _openBottomScreen(context, const AcademyScreen()),
+                        ),
+                        _BottomCircleIcon(
+                          icon: Icons.emoji_events_rounded,
+                          label: 'Achievements',
+                          onTap: () => _openBottomScreen(context, const AchievementsScreen()),
+                        ),
+                        _BottomCircleIcon(
+                          icon: Icons.store_rounded,
+                          label: 'Store',
+                          onTap: () => _openBottomScreen(context, const StoreScreen()),
+                        ),
+                        _BottomCircleIcon(
+                          icon: Icons.settings_rounded,
+                          label: 'Settings',
+                          onTap: () => _openBottomScreen(context, const SettingsScreen()),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 18),
@@ -96,27 +113,62 @@ class ModeSelectionScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _openBottomScreen(BuildContext context, Widget child) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, __, ___) => child,
+        transitionsBuilder: (_, animation, __, page) =>
+            FadeTransition(opacity: animation, child: page),
+      ),
+    );
+  }
 }
 
 class _BottomCircleIcon extends StatelessWidget {
-  const _BottomCircleIcon({required this.icon});
+  const _BottomCircleIcon({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: const Color(0xAA121212),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
-        boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 5)),
+    return InkWell(
+      borderRadius: BorderRadius.circular(32),
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xAA121212),
+              border: Border.all(color: Colors.white.withOpacity(0.18)),
+              boxShadow: const [
+                BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 5)),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
-      child: Icon(icon, color: Colors.white),
     );
   }
 }
