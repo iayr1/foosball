@@ -21,8 +21,13 @@ class GameBoardWidget extends StatelessWidget {
         return Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
+                color: const Color(0xFF1DE9FF).withOpacity(0.12),
+                blurRadius: 32,
+                spreadRadius: 4,
+              ),
+              const BoxShadow(
                 color: Colors.black87,
                 blurRadius: 30,
                 spreadRadius: 3,
@@ -31,7 +36,7 @@ class GameBoardWidget extends StatelessWidget {
             ],
           ),
           child: CustomPaint(
-            painter: _WoodBoardPainter(highlightGap: highlightGap),
+            painter: _IceBoardPainter(highlightGap: highlightGap),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Stack(
@@ -81,6 +86,10 @@ class GameBoardWidget extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  Puck Chip
+// ─────────────────────────────────────────────────────────────────────────────
+
 class _PuckChip extends StatelessWidget {
   const _PuckChip({required this.isPlayer});
 
@@ -88,36 +97,56 @@ class _PuckChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = isPlayer ? const Color(0xFFEFEFEF) : const Color(0xFF191A1C);
+    // Player = icy white/cyan | Opponent = dark charcoal/red
+    final accent =
+        isPlayer ? const Color(0xFF1DE9FF) : const Color(0xFFFF4D6A);
+    final baseColor =
+        isPlayer ? const Color(0xFFD8F6FF) : const Color(0xFF1A1A22);
 
     return Container(
-      width: 26,
-      height: 26,
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        gradient: RadialGradient(
+          center: const Alignment(-0.35, -0.35),
           colors: [
-            Color.alphaBlend(Colors.white.withOpacity(0.22), baseColor),
+            Color.alphaBlend(Colors.white.withOpacity(0.35), baseColor),
             baseColor,
           ],
         ),
-        border: Border.all(
-          color: isPlayer ? Colors.white.withOpacity(0.5) : Colors.black,
-          width: 1.1,
-        ),
+        border: Border.all(color: accent.withOpacity(0.70), width: 1.4),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.45),
+            color: accent.withOpacity(0.45),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.55),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
         ],
       ),
+      // Specular highlight
+      child: Center(
+        child: Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withOpacity(isPlayer ? 0.55 : 0.18),
+          ),
+        ),
+      ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Hint Arrows
+// ─────────────────────────────────────────────────────────────────────────────
 
 class _HintArrows extends StatelessWidget {
   const _HintArrows();
@@ -128,12 +157,10 @@ class _HintArrows extends StatelessWidget {
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.keyboard_arrow_down_rounded,
-                color: Color(0xA6FF9F43), size: 26),
-            SizedBox(height: 28),
-            Icon(Icons.keyboard_arrow_up_rounded,
-                color: Color(0xA6FF9F43), size: 26),
+          children: [
+            _GlowArrow(icon: Icons.keyboard_arrow_down_rounded, flip: false),
+            const SizedBox(height: 24),
+            _GlowArrow(icon: Icons.keyboard_arrow_up_rounded, flip: true),
           ],
         ),
       ),
@@ -141,8 +168,38 @@ class _HintArrows extends StatelessWidget {
   }
 }
 
-class _WoodBoardPainter extends CustomPainter {
-  _WoodBoardPainter({required this.highlightGap});
+class _GlowArrow extends StatelessWidget {
+  const _GlowArrow({required this.icon, required this.flip});
+
+  final IconData icon;
+  final bool flip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFFFFC44D).withOpacity(0.10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFFFC44D).withOpacity(0.30),
+            blurRadius: 12,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Icon(icon, color: const Color(0xCCFFC44D), size: 24),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Ice Board Painter
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _IceBoardPainter extends CustomPainter {
+  _IceBoardPainter({required this.highlightGap});
 
   final bool highlightGap;
 
@@ -150,21 +207,29 @@ class _WoodBoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
     final rRect = RRect.fromRectAndRadius(rect, const Radius.circular(24));
+    final rng = Random(42); // deterministic
 
-    final woodBase = Paint()
+    // ── Ice base ──────────────────────────────────────────────────────────
+    final iceBase = Paint()
       ..shader = const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFFD9A86C), Color(0xFFC88B4C), Color(0xFFBE7E42)],
+        colors: [
+          Color(0xFF0B2540),
+          Color(0xFF0A1E36),
+          Color(0xFF061528),
+        ],
       ).createShader(rect);
-    canvas.drawRRect(rRect, woodBase);
+    canvas.drawRRect(rRect, iceBase);
 
-    final grainPaint = Paint()
-      ..color = const Color(0x44FFFFFF)
-      ..strokeWidth = 1.4;
-    for (var i = 0; i < 18; i++) {
-      final y = size.height * (i / 18);
-      final wave = sin(i * 0.9) * 7;
+    // ── Ice grain / surface texture ───────────────────────────────────────
+    for (var i = 0; i < 26; i++) {
+      final y = size.height * (i / 26);
+      final wave = sin(i * 1.1) * 5.0;
+      final opacity = 0.025 + rng.nextDouble() * 0.025;
+      final grainPaint = Paint()
+        ..color = const Color(0xFF1DE9FF).withOpacity(opacity)
+        ..strokeWidth = 0.8;
       canvas.drawLine(
         Offset(0, y + wave),
         Offset(size.width, y - wave),
@@ -172,53 +237,150 @@ class _WoodBoardPainter extends CustomPainter {
       );
     }
 
+    // ── Rink centre circle ────────────────────────────────────────────────
+    final centreX = size.width / 2;
+    final centreY = size.height / 2;
+    final circleR = size.width * 0.18;
+
+    final centreFill = Paint()
+      ..shader = RadialGradient(
+        colors: [
+          const Color(0xFF1DE9FF).withOpacity(0.07),
+          Colors.transparent,
+        ],
+      ).createShader(
+        Rect.fromCircle(center: Offset(centreX, centreY), radius: circleR),
+      );
+    canvas.drawCircle(Offset(centreX, centreY), circleR, centreFill);
+
+    final centreRing = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = const Color(0xFF1DE9FF).withOpacity(0.22);
+    canvas.drawCircle(Offset(centreX, centreY), circleR, centreRing);
+
+    // Centre dot
+    canvas.drawCircle(
+      Offset(centreX, centreY),
+      3.5,
+      Paint()..color = const Color(0xFF1DE9FF).withOpacity(0.55),
+    );
+
+    // ── Goal crease lines (top & bottom) ─────────────────────────────────
+    final creaseWidth = size.width * 0.38;
+    final creaseHeight = size.height * 0.08;
+    final creasePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2
+      ..color = const Color(0xFF1DE9FF).withOpacity(0.20);
+
+    // Top crease
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(
+        Rect.fromCenter(
+          center: Offset(centreX, creaseHeight / 2 + 12),
+          width: creaseWidth,
+          height: creaseHeight,
+        ),
+        bottomLeft: const Radius.circular(8),
+        bottomRight: const Radius.circular(8),
+      ),
+      creasePaint,
+    );
+
+    // Bottom crease
+    canvas.drawRRect(
+      RRect.fromRectAndCorners(
+        Rect.fromCenter(
+          center: Offset(centreX, size.height - creaseHeight / 2 - 12),
+          width: creaseWidth,
+          height: creaseHeight,
+        ),
+        topLeft: const Radius.circular(8),
+        topRight: const Radius.circular(8),
+      ),
+      creasePaint,
+    );
+
+    // ── Divider wall ──────────────────────────────────────────────────────
     final dividerY = size.height * 0.5;
-    final gapHalf = size.width * 0.1;
+    final gapHalf = size.width * 0.10;
     final wallPaint = Paint()
-      ..color = const Color(0xFF684019)
-      ..strokeWidth = 7
+      ..color = const Color(0xFF1A3D5C)
+      ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(
       Offset(18, dividerY),
-      Offset(size.width / 2 - gapHalf, dividerY),
+      Offset(centreX - gapHalf, dividerY),
       wallPaint,
     );
     canvas.drawLine(
-      Offset(size.width / 2 + gapHalf, dividerY),
+      Offset(centreX + gapHalf, dividerY),
       Offset(size.width - 18, dividerY),
       wallPaint,
     );
 
+    // Divider edge highlight
+    final wallHighlight = Paint()
+      ..color = const Color(0xFF1DE9FF).withOpacity(0.22)
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(
+      Offset(18, dividerY),
+      Offset(centreX - gapHalf, dividerY),
+      wallHighlight,
+    );
+    canvas.drawLine(
+      Offset(centreX + gapHalf, dividerY),
+      Offset(size.width - 18, dividerY),
+      wallHighlight,
+    );
+
+    // ── Gap glow ──────────────────────────────────────────────────────────
     if (highlightGap) {
-      final glow = Paint()
+      final gapGlow = Paint()
         ..shader = RadialGradient(
-          colors: [const Color(0x66FF9F43), Colors.transparent],
+          colors: [
+            const Color(0xFFFFC44D).withOpacity(0.45),
+            const Color(0xFFFFC44D).withOpacity(0.10),
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.4, 1.0],
         ).createShader(
           Rect.fromCircle(
-            center: Offset(size.width / 2, dividerY),
-            radius: 38,
+            center: Offset(centreX, dividerY),
+            radius: 42,
           ),
         );
-      canvas.drawCircle(Offset(size.width / 2, dividerY), 38, glow);
+      canvas.drawCircle(Offset(centreX, dividerY), 42, gapGlow);
+
+      // Gap centre dot
+      canvas.drawCircle(
+        Offset(centreX, dividerY),
+        4,
+        Paint()..color = const Color(0xCCFFC44D),
+      );
     }
 
-    final innerShadow = Paint()
+    // ── Inner vignette ────────────────────────────────────────────────────
+    final vignette = Paint()
       ..shader = RadialGradient(
-        colors: [Colors.transparent, Colors.black.withOpacity(0.33)],
-        stops: const [0.7, 1],
+        colors: [Colors.transparent, Colors.black.withOpacity(0.45)],
+        stops: const [0.55, 1.0],
       ).createShader(rect);
-    canvas.drawRRect(rRect, innerShadow);
+    canvas.drawRRect(rRect, vignette);
 
+    // ── Board border ──────────────────────────────────────────────────────
     final border = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = Colors.white.withOpacity(0.15);
+      ..strokeWidth = 1.6
+      ..color = const Color(0xFF1DE9FF).withOpacity(0.20);
     canvas.drawRRect(rRect, border);
   }
 
   @override
-  bool shouldRepaint(covariant _WoodBoardPainter oldDelegate) {
+  bool shouldRepaint(covariant _IceBoardPainter oldDelegate) {
     return highlightGap != oldDelegate.highlightGap;
   }
 }

@@ -31,6 +31,7 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
   int _opponentScore = 0;
   int _playerPucksLeft = GameController.totalPucksPerPlayer;
   int _opponentPucksLeft = GameController.totalPucksPerPlayer;
+
   bool _soundOn = true;
   bool _showHint = true;
   bool _isAiming = true;
@@ -48,6 +49,7 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
       puckColor: const Color(0xFF191A1C),
       startsOnTop: true,
     );
+
     _bottomPlayer = const Player(
       id: 'bottom',
       name: 'You',
@@ -79,9 +81,6 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
 
   @override
   Widget build(BuildContext context) {
-    final media = MediaQuery.sizeOf(context);
-    final boardHeight = media.height * 0.64;
-
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -96,43 +95,51 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
             padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
             child: Stack(
               children: [
+                /// 🔥 MAIN CONTENT
                 Column(
-                  children: [
-                    ScoreboardWidget(
-                      playerScore: _playerScore,
-                      aiScore: _opponentScore,
-                      playerPucks: _playerPucksLeft,
-                      aiPucks: _opponentPucksLeft,
-                      isSoundOn: _soundOn,
-                      onMenuTap: () => Navigator.of(context).maybePop(),
-                      onSoundTap: () => setState(() => _soundOn = !_soundOn),
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      height: boardHeight,
-                      width: double.infinity,
-                      child: GameBoardWidget(
-                        gameLayer: GameWidget(game: _game),
-                      ),
-                    ),
-                    const Spacer(),
-                    SizedBox(
-                      height: media.height * 0.18,
-                      child: ControlOverlayWidget(
-                        isAiming: _isAiming,
-                        onUndo: _restartMatch,
-                        onBoost: () {
-                          // Keep action button behavior only (no UI changes).
-                          _restartMatch();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                Positioned(
-                  top: media.height * 0.49,
-                  left: 0,
-                  right: 0,
+  children: [
+    ScoreboardWidget(
+      playerScore: _playerScore,
+      opponentScore: _opponentScore,
+      playerPucks: _playerPucksLeft,
+      opponentPucks: _opponentPucksLeft,
+      playerName: _bottomPlayer.name,
+      opponentName: _topPlayer.name,
+      isSoundOn: _soundOn,
+      onMenuTap: () => Navigator.of(context).maybePop(),
+      onSoundTap: () => setState(() => _soundOn = !_soundOn),
+    ),
+
+    const SizedBox(height: 12),
+
+    Expanded(
+      flex: 6,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: GameBoardWidget(
+          gameLayer: GameWidget(game: _game),
+        ),
+      ),
+    ),
+
+    Flexible(
+      fit: FlexFit.loose,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: ControlOverlayWidget(
+          isAiming: _isAiming,
+          onUndo: _restartMatch,
+          onBoost: () {
+            _restartMatch();
+          },
+        ),
+      ),
+    ),
+  ],
+),
+
+                /// 🔥 CENTER HINT (FIXED OVERFLOW ISSUE)
+                Positioned.fill(
                   child: AnimatedOpacity(
                     duration: const Duration(milliseconds: 600),
                     opacity: _showHint ? 1 : 0,
@@ -154,7 +161,6 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
                               BoxShadow(
                                 color: Color(0x66FF9F43),
                                 blurRadius: 16,
-                                spreadRadius: 0.5,
                               ),
                             ],
                           ),
@@ -195,7 +201,9 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
       _playerScore = playerSent;
       _opponentScore = opponentSent;
       _playerPucksLeft = GameController.totalPucksPerPlayer - playerSent;
-      _opponentPucksLeft = GameController.totalPucksPerPlayer - opponentSent;
+      _opponentPucksLeft =
+          GameController.totalPucksPerPlayer - opponentSent;
+
       _isAiming = !_controller.isWaiting &&
           !_controller.isAiTurn &&
           !state.hasWinner;
@@ -203,14 +211,17 @@ class _SlingPuckGameViewState extends State<SlingPuckGameView> {
 
     if (state.hasWinner && !_didShowWinDialog) {
       _didShowWinDialog = true;
+
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
+
         showDialog<void>(
           context: context,
           barrierDismissible: false,
           builder: (_) => WinDialog(
-            winnerName:
-                state.winnerId == _bottomPlayer.id ? _bottomPlayer.name : _topPlayer.name,
+            winnerName: state.winnerId == _bottomPlayer.id
+                ? _bottomPlayer.name
+                : _topPlayer.name,
             onRestart: _restartMatch,
           ),
         );

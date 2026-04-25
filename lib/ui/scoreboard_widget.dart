@@ -1,120 +1,140 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class ScoreboardWidget extends StatelessWidget {
   const ScoreboardWidget({
     super.key,
     required this.playerScore,
-    required this.aiScore,
+    required this.opponentScore,
+    required this.playerName,
+    required this.opponentName,
     this.playerPucks = 5,
-    this.aiPucks = 5,
+    this.opponentPucks = 5,
     this.onMenuTap,
     this.onSoundTap,
     this.isSoundOn = true,
   });
 
   final int playerScore;
-  final int aiScore;
+  final int opponentScore;
   final int playerPucks;
-  final int aiPucks;
+  final int opponentPucks;
+  final String playerName;
+  final String opponentName;
   final VoidCallback? onMenuTap;
   final VoidCallback? onSoundTap;
   final bool isSoundOn;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Stack(
       children: [
+        /// 🔥 MAIN CARD
         Container(
-          height: 110,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          height: 115,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xE61A1A1D), Color(0xB30E0E10)],
+              colors: [Color(0xFF1C1D20), Color(0xFF0D0E10)],
             ),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
+            border: Border.all(color: const Color(0x33FFFFFF)),
             boxShadow: const [
               BoxShadow(
-                color: Colors.black54,
-                blurRadius: 20,
+                color: Color(0x88000000),
+                blurRadius: 25,
                 offset: Offset(0, 10),
+              ),
+              BoxShadow(
+                color: Color(0x33FF9F43),
+                blurRadius: 20,
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _SideInfo(
-                      label: 'YOU',
-                      puckCount: playerPucks,
-                      puckColor: Colors.white,
-                      avatar: const CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Color(0xFF39DFA8),
-                        child: Icon(Icons.person, color: Colors.black, size: 18),
-                      ),
-                      alignRight: false,
-                    ),
+
+          child: Row(
+            children: [
+              /// 👤 PLAYER
+              Expanded(
+                child: _SideInfo(
+                  label: playerName,
+                  puckCount: playerPucks,
+                  puckColor: const Color(0xFF39DFA8),
+                  isActive: true,
+                  avatar: const CircleAvatar(
+                    radius: 18,
+                    backgroundColor: Color(0xFF39DFA8),
+                    child: Icon(Icons.person,
+                        color: Colors.black, size: 20),
                   ),
-                  Expanded(
-                    child: Center(
-                      child: TweenAnimationBuilder<double>(
-                        tween: Tween<double>(begin: 0, end: 1),
-                        duration: const Duration(milliseconds: 600),
-                        curve: Curves.easeOutCubic,
-                        builder: (context, value, child) => Transform.scale(
-                          scale: 0.95 + (value * 0.05),
-                          child: child,
-                        ),
-                        child: Text(
-                          '$playerScore - $aiScore',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: _SideInfo(
-                      label: 'AI',
-                      puckCount: aiPucks,
-                      puckColor: Colors.black,
-                      avatar: const CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Color(0xFF2A2D31),
-                        child: Icon(Icons.smart_toy, color: Colors.white, size: 18),
-                      ),
-                      alignRight: true,
-                    ),
-                  ),
-                ],
+                  alignRight: false,
+                ),
               ),
-            ),
+
+              /// 🎯 SCORE
+              Expanded(
+                child: Center(
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.9, end: 1),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOutBack,
+                    builder: (context, value, child) =>
+                        Transform.scale(scale: value, child: child),
+                    child: Text(
+                      '$playerScore  :  $opponentScore',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              /// 🤖 / 👥 OPPONENT
+              Expanded(
+                child: _SideInfo(
+                  label: opponentName,
+                  puckCount: opponentPucks,
+                  puckColor: Colors.white,
+                  isActive: false,
+                  avatar: CircleAvatar(
+                    radius: 18,
+                    backgroundColor: const Color(0xFF2A2D31),
+                    child: Icon(
+                      opponentName.toLowerCase().contains('ai')
+                          ? Icons.smart_toy
+                          : Icons.person,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  alignRight: true,
+                ),
+              ),
+            ],
           ),
         ),
+
+        /// ☰ MENU
         Positioned(
-          left: 4,
-          top: 4,
-          child: _TopIconButton(icon: Icons.menu_rounded, onTap: onMenuTap),
-        ),
-        Positioned(
-          right: 4,
-          top: 4,
+          left: 6,
+          top: 6,
           child: _TopIconButton(
-            icon: isSoundOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+            icon: Icons.menu_rounded,
+            onTap: onMenuTap,
+          ),
+        ),
+
+        /// 🔊 SOUND
+        Positioned(
+          right: 6,
+          top: 6,
+          child: _TopIconButton(
+            icon: isSoundOn
+                ? Icons.volume_up_rounded
+                : Icons.volume_off_rounded,
             onTap: onSoundTap,
           ),
         ),
@@ -130,6 +150,7 @@ class _SideInfo extends StatelessWidget {
     required this.puckColor,
     required this.avatar,
     required this.alignRight,
+    required this.isActive,
   });
 
   final String label;
@@ -137,6 +158,7 @@ class _SideInfo extends StatelessWidget {
   final Color puckColor;
   final Widget avatar;
   final bool alignRight;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
@@ -144,10 +166,10 @@ class _SideInfo extends StatelessWidget {
       avatar,
       const SizedBox(width: 8),
       Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
+        label.toUpperCase(),
+        style: TextStyle(
+          color: isActive ? Colors.white : Colors.white60,
+          fontWeight: FontWeight.w800,
           letterSpacing: 1.2,
         ),
       ),
@@ -163,21 +185,33 @@ class _SideInfo extends StatelessWidget {
               alignRight ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: alignRight ? rowChildren.reversed.toList() : rowChildren,
         ),
-        const SizedBox(height: 8),
+
+        const SizedBox(height: 10),
+
+        /// 🔥 PUCKS
         Row(
           mainAxisAlignment:
               alignRight ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: List.generate(
             5,
-            (index) => Container(
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
               margin: const EdgeInsets.only(right: 4),
-              width: 7,
-              height: 7,
+              width: 8,
+              height: 8,
               decoration: BoxDecoration(
-                color:
-                    index < puckCount ? puckColor : Colors.white.withOpacity(0.18),
+                color: index < puckCount
+                    ? puckColor
+                    : Colors.white.withOpacity(0.12),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                boxShadow: index < puckCount
+                    ? [
+                        BoxShadow(
+                          color: puckColor.withOpacity(0.6),
+                          blurRadius: 6,
+                        )
+                      ]
+                    : [],
               ),
             ),
           ),
@@ -203,7 +237,7 @@ class _TopIconButtonState extends State<_TopIconButton> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _scale = 0.92),
+      onTapDown: (_) => setState(() => _scale = 0.88),
       onTapCancel: () => setState(() => _scale = 1),
       onTapUp: (_) => setState(() => _scale = 1),
       onTap: widget.onTap,
@@ -211,12 +245,20 @@ class _TopIconButtonState extends State<_TopIconButton> {
         scale: _scale,
         duration: const Duration(milliseconds: 120),
         child: Container(
-          width: 34,
-          height: 34,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.black.withOpacity(0.32),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF2A2D31), Color(0xFF1A1B1D)],
+            ),
+            border: Border.all(color: Colors.white.withOpacity(0.15)),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black54,
+                blurRadius: 10,
+              ),
+            ],
           ),
           child: Icon(widget.icon, color: Colors.white, size: 20),
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../controllers/game_flow_controller.dart';
 import '../models/game_mode.dart';
@@ -124,37 +125,235 @@ class _TutorialScreenState extends State<TutorialScreen> {
   }
 }
 
-class _TutorialCard extends StatelessWidget {
-  const _TutorialCard({required this.title, required this.symbol, required this.text});
+
+
+class _TutorialCard extends StatefulWidget {
+  const _TutorialCard({
+    required this.title,
+    required this.text,
+  });
 
   final String title;
-  final String symbol;
   final String text;
+
+  @override
+  State<_TutorialCard> createState() => _TutorialCardState();
+}
+
+class _TutorialCardState extends State<_TutorialCard>
+    with TickerProviderStateMixin {
+  late AnimationController _puckController;
+  late AnimationController _impactController;
+
+  late Animation<Offset> _puckMove;
+  late Animation<double> _impactScale;
+  late Animation<double> _impactOpacity;
+
+  @override
+  void initState() {
+    super.initState();
+
+    /// 🎯 PUCK MOVEMENT (trajectory)
+    _puckController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+
+    _puckMove = Tween<Offset>(
+      begin: const Offset(-0.8, 0.5),
+      end: const Offset(0.8, -0.2),
+    ).animate(CurvedAnimation(
+      parent: _puckController,
+      curve: Curves.easeInOut,
+    ));
+
+    /// 💥 IMPACT
+    _impactController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _impactScale = Tween<double>(begin: 0.5, end: 2).animate(
+      CurvedAnimation(parent: _impactController, curve: Curves.easeOut),
+    );
+
+    _impactOpacity = Tween<double>(begin: 1, end: 0).animate(
+      CurvedAnimation(parent: _impactController, curve: Curves.easeOut),
+    );
+
+    _puckController.addListener(() {
+      if (_puckController.value > 0.95) {
+        _impactController.forward(from: 0);
+
+        /// 🔊 SOUND
+        SystemSound.play(SystemSoundType.click);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _puckController.dispose();
+    _impactController.dispose();
+    super.dispose();
+  }
+
+  /// 🎯 TRAJECTORY LINE
+  Widget _trajectory() {
+    return CustomPaint(
+      size: const Size(double.infinity, 150),
+      painter: _TrajectoryPainter(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.all(8),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0x771B1B1B),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white24),
+          borderRadius: BorderRadius.circular(26),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A1B1D), Color(0xFF0E0F11)],
+          ),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
           boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, 8)),
+            BoxShadow(color: Colors.black54, blurRadius: 20),
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(title, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 14),
-            Text(symbol, style: const TextStyle(fontSize: 64)),
-            const SizedBox(height: 14),
-            Text(text, style: const TextStyle(color: Colors.white70, fontSize: 16)),
+            /// 🔥 TITLE
+            Text(
+              widget.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// 🎯 TRAJECTORY
+            _trajectory(),
+
+            /// 🎮 PUCK + HAND
+            SizedBox(
+              height: 120,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  /// ✋ HAND
+                  AnimatedBuilder(
+                    animation: _puckController,
+                    builder: (_, __) {
+                      return Transform.translate(
+                        offset: Offset(
+                          _puckMove.value.dx * 120,
+                          _puckMove.value.dy * 80,
+                        ),
+                        child: const Icon(
+                          Icons.pan_tool_alt_rounded,
+                          color: Colors.white70,
+                          size: 32,
+                        ),
+                      );
+                    },
+                  ),
+
+                  /// ⚪ PUCK
+                  AnimatedBuilder(
+                    animation: _puckController,
+                    builder: (_, __) {
+                      return Transform.translate(
+                        offset: Offset(
+                          _puckMove.value.dx * 120,
+                          _puckMove.value.dy * 80,
+                        ),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+
+                  /// 💥 IMPACT
+                  AnimatedBuilder(
+                    animation: _impactController,
+                    builder: (_, __) {
+                      return Opacity(
+                        opacity: _impactOpacity.value,
+                        child: Transform.scale(
+                          scale: _impactScale.value,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.orangeAccent,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// 📖 TEXT
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                widget.text,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+/// 🎯 TRAJECTORY PAINTER
+class _TrajectoryPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white24
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.8);
+
+    path.quadraticBezierTo(
+      size.width * 0.5,
+      size.height * 0.2,
+      size.width,
+      size.height * 0.5,
+    );
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
