@@ -168,12 +168,12 @@ class _AimGuide extends StatelessWidget {
       children: [
         SizedBox(
           width: 2,
-          height: 62,
+          height: 16,
           child: CustomPaint(
             painter: _DottedLinePainter(),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 0),
         Container(
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
