@@ -1,4 +1,4 @@
-package com.example.foosball
+package com.connectonmap.slingpuck
 
 import io.flutter.embedding.android.FlutterActivity
 
