@@ -1,0 +1,19 @@
+# Optional: if you install fastlane (Ruby), these lanes use the same metadata folder.
+#   fastlane android internal   -> upload the bundle + listing to the internal testing track
+#   fastlane android listing    -> update only the store listing text and images
+default_platform(:android)
+
+platform :android do
+  desc "Build is expected at build/app/outputs/bundle/release/app-release.aab"
+  lane :internal do
+    upload_to_play_store(
+      track: "internal",
+      aab: "build/app/outputs/bundle/release/app-release.aab",
+      release_status: "draft",
+    )
+  end
+
+  lane :listing do
+    upload_to_play_store(skip_upload_aab: true, skip_upload_apk: true, skip_upload_changelogs: true)
+  end
+end

@@ -29,19 +29,13 @@ class SfxService {
   Future<void> playSlingStretch() async {
     if (!_isEnabled) return;
     await _slingPlayer.stop();
-    await _slingPlayer.play(
-      AssetSource('sound_effects/slingstretchsound.mp3'),
-      volume: 1.0,
-    );
+    await _slingPlayer.play(AssetSource('sound_effects/slingstretchsound.mp3'), volume: 1.0);
   }
 
   Future<void> playStriker() async {
     if (!_isEnabled) return;
     await _strikerPlayer.stop();
-    await _strikerPlayer.play(
-      AssetSource('sound_effects/strikersound.mp3'),
-      volume: 1.0,
-    );
+    await _strikerPlayer.play(AssetSource('sound_effects/strikersound.mp3'), volume: 1.0);
   }
 
   Future<void> dispose() async {

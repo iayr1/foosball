@@ -1,4 +1,1 @@
-enum GameMode {
-  twoPlayer,
-  vsAI,
-}
+enum GameMode { twoPlayer, vsAI }

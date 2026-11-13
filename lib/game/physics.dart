@@ -10,22 +10,22 @@ import 'wall.dart';
 class PhysicsEngine {
   static const double restitution = 0.92;
 
-  void update({
-    required double dt,
-    required Vector2 boardSize,
-    required List<Puck> pucks,
-    required List<Wall> walls,
-  }) {
+  /// Turned off from Settings > Vibration.
+  static bool hapticsEnabled = true;
+
+  /// Called on hard puck-to-puck hits with the contact point and impact speed.
+  void Function(Vector2 point, double speed)? onImpact;
+
+  static void _buzz() {
+    if (hapticsEnabled) HapticFeedback.lightImpact();
+  }
+
+  void update({required double dt, required Vector2 boardSize, required List<Puck> pucks, required List<Wall> walls}) {
     _integratePucks(dt: dt, boardSize: boardSize, pucks: pucks, walls: walls);
     _handlePuckCollisions(pucks);
   }
 
-  void _integratePucks({
-    required double dt,
-    required Vector2 boardSize,
-    required List<Puck> pucks,
-    required List<Wall> walls,
-  }) {
+  void _integratePucks({required double dt, required Vector2 boardSize, required List<Puck> pucks, required List<Wall> walls}) {
     for (final puck in pucks) {
       _clampVelocity(puck);
       puck.position += puck.velocity * dt;
@@ -48,33 +48,27 @@ class PhysicsEngine {
     if (puck.position.x - r < 0) {
       puck.position.x = r;
       puck.velocity.x = puck.velocity.x.abs() * restitution;
-      HapticFeedback.lightImpact();
+      _buzz();
     } else if (puck.position.x + r > boardSize.x) {
       puck.position.x = boardSize.x - r;
       puck.velocity.x = -puck.velocity.x.abs() * restitution;
-      HapticFeedback.lightImpact();
+      _buzz();
     }
 
     if (puck.position.y - r < 0) {
       puck.position.y = r;
       puck.velocity.y = puck.velocity.y.abs() * restitution;
-      HapticFeedback.lightImpact();
+      _buzz();
     } else if (puck.position.y + r > boardSize.y) {
       puck.position.y = boardSize.y - r;
       puck.velocity.y = -puck.velocity.y.abs() * restitution;
-      HapticFeedback.lightImpact();
+      _buzz();
     }
   }
 
   void _resolveWallCollision(Puck puck, Wall wall) {
-    final nearestX = puck.position.x.clamp(
-      wall.position.x,
-      wall.position.x + wall.size.x,
-    );
-    final nearestY = puck.position.y.clamp(
-      wall.position.y,
-      wall.position.y + wall.size.y,
-    );
+    final nearestX = puck.position.x.clamp(wall.position.x, wall.position.x + wall.size.x);
+    final nearestY = puck.position.y.clamp(wall.position.y, wall.position.y + wall.size.y);
     final delta = Vector2(puck.position.x - nearestX, puck.position.y - nearestY);
     final distance = delta.length;
 
@@ -86,7 +80,7 @@ class PhysicsEngine {
       final velocityAlongNormal = puck.velocity.dot(normal);
       if (velocityAlongNormal < 0) {
         puck.velocity -= normal * (1 + restitution) * velocityAlongNormal;
-        HapticFeedback.lightImpact();
+        _buzz();
       }
     }
   }
@@ -117,7 +111,10 @@ class PhysicsEngine {
 
         a.velocity -= impulseVector;
         b.velocity += impulseVector;
-        HapticFeedback.selectionClick();
+        if (hapticsEnabled) HapticFeedback.selectionClick();
+        if (-separatingSpeed > 260) {
+          onImpact?.call(a.position + normal * Puck.radius, -separatingSpeed);
+        }
       }
     }
   }

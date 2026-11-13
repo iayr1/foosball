@@ -1,33 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-import 'controllers/game_flow_controller.dart';
+import 'audio/sfx_service.dart';
+import 'data/profile.dart';
+import 'game/physics.dart';
 import 'screens/splash_screen.dart';
+import 'theme/arena_theme.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const SlingPuckApp());
+  await SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
+
+  final profile = Profile.instance;
+  await profile.load();
+  await SfxService.instance.initialize();
+  SfxService.instance.setEnabled(profile.sound);
+  PhysicsEngine.hapticsEnabled = profile.haptics;
+
+  runApp(const SlingArenaApp());
 }
 
-class SlingPuckApp extends StatelessWidget {
-  const SlingPuckApp({super.key});
+class SlingArenaApp extends StatelessWidget {
+  const SlingArenaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final flowController = GameFlowController();
-
     return MaterialApp(
-      title: 'Sling Puck',
+      title: 'Sling Arena',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF071317),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF31D0AA),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-      ),
-      home: SplashScreen(flowController: flowController),
+      theme: Arena.theme(),
+      // Respect the system font size, but cap it so chunky game UI keeps its shape.
+      builder: (context, child) => MediaQuery.withClampedTextScaling(maxScaleFactor: 1.2, child: child!),
+      home: const SplashScreen(),
     );
   }
 }

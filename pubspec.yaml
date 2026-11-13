@@ -1,5 +1,5 @@
 name: foosball
-description: "A new Flutter project."
+description: "Sling Arena - a glossy sling puck game."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -50,6 +50,28 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  image_path: "assets/branding/icon.png"
+  android: "ic_launcher"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0E1626"
+  adaptive_icon_foreground: "assets/branding/icon_foreground.png"
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    image_path: "assets/branding/icon.png"
+    background_color: "#0E1626"
+    theme_color: "#FF8A3D"
+  windows:
+    generate: true
+    image_path: "assets/branding/icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/branding/icon.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -65,6 +87,16 @@ flutter:
   assets:
     - assets/sound_effects/slingstretchsound.mp3
     - assets/sound_effects/strikersound.mp3
+
+    - assets/branding/logo.png
+
+  fonts:
+    - family: LilitaOne
+      fonts:
+        - asset: assets/fonts/LilitaOne-Regular.ttf
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito.ttf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

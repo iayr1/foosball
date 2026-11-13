@@ -1,0 +1,3 @@
+tags:
+  store:
+    skip: "Run explicitly with --tags store to regenerate Play Store screens"

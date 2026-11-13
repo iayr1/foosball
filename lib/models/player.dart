@@ -7,10 +7,5 @@ class Player {
   final Color puckColor;
   final bool startsOnTop;
 
-  const Player({
-    required this.id,
-    required this.name,
-    required this.puckColor,
-    required this.startsOnTop,
-  });
+  const Player({required this.id, required this.name, required this.puckColor, required this.startsOnTop});
 }
